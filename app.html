@@ -1,0 +1,1566 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LENSA - Layar Edukasi Nalar Sains Anak</title>
+  <meta name="description" content="Aplikasi pembelajaran sains interaktif materi Sifat-Sifat Cahaya berbasis Taksonomi Bloom (C1-C5) untuk anak sekolah dasar.">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..1000;1,9..40,400..1000&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --primary: #0ea5e9;
+      --primary-dark: #0369a1;
+      --primary-light: #e0f2fe;
+      --bg-sky: #f0f9ff;
+      --sun: #ffc93c;
+      --sun-dark: #e8a200;
+      --sun-light: #fff6d6;
+      --success: #16a34a;
+      --success-light: #dcfce7;
+      --warning: #ea580c;
+      --warning-light: #ffedd5;
+      --danger: #dc2626;
+      --dark: #0f2a43;
+      --muted: #4a647c;
+      --line: #d5e6f3;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Nunito", "DM Sans", system-ui, sans-serif;
+      color: var(--dark);
+      background: radial-gradient(circle at top, #fffbeb 0%, #e0f2fe 55%, #bae6fd 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 14px 8px 36px;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; border: 0; }
+    button:focus-visible, input:focus-visible {
+      outline: 3px solid var(--sun);
+      outline-offset: 3px;
+    }
+    .app {
+      width: 100%;
+      max-width: 520px;
+      min-height: 88vh;
+      margin: auto;
+      background: var(--bg-sky);
+      border-radius: 32px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 22px 48px -12px rgba(3, 105, 161, 0.24), 0 0 0 3px rgba(255, 255, 255, 0.85);
+    }
+    .screen {
+      display: none;
+      min-height: 88vh;
+      padding: 22px 18px 84px;
+      animation: fadeIn 0.26s ease-out;
+    }
+    .screen.active { display: block; }
+    .screen.center-screen.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    @keyframes gentleShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    #home {
+      position: relative;
+      isolation: isolate;
+      background: linear-gradient(180deg, #38bdf8 0%, #bae6fd 42%, #f0f9ff 100%);
+    }
+    .center-screen > div { width: 100%; }
+    .opening-illustration {
+      display: block;
+      width: 100%;
+      max-width: 370px;
+      height: auto;
+      margin: 0 auto 14px;
+      border-radius: 26px;
+      animation: floatSlow 3.5s ease-in-out infinite;
+    }
+    .title {
+      text-align: center;
+      font-size: 40px;
+      font-weight: 900;
+      color: var(--primary-dark);
+      letter-spacing: 0.5px;
+      text-shadow: 0 3px 0 rgba(255, 255, 255, 0.9);
+      line-height: 1.05;
+    }
+    .subtitle {
+      text-align: center;
+      margin-top: 4px;
+      color: var(--primary-dark);
+      font-weight: 800;
+      font-size: 15px;
+    }
+    .slogan {
+      text-align: center;
+      font-weight: 800;
+      font-size: 16px;
+      margin: 8px 0 20px;
+      color: var(--dark);
+      background: rgba(255, 255, 255, 0.75);
+      display: block;
+      padding: 6px 14px;
+      border-radius: 99px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .opening-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 56px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      font-weight: 900;
+      font-size: 16.5px;
+      margin-top: 12px;
+      transition: transform 0.12s ease, filter 0.15s ease, box-shadow 0.12s ease;
+      text-align: center;
+    }
+    .opening-actions .btn { margin-top: 0; }
+    .btn:hover { filter: brightness(1.03); }
+    .btn:active, .menu-card:active { transform: translateY(3px); }
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 5px 0 var(--primary-dark), 0 8px 18px rgba(14, 165, 233, 0.28);
+    }
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--primary-dark);
+      border: 2.5px solid var(--line);
+      box-shadow: 0 5px 0 var(--line);
+    }
+    .btn-student {
+      background: var(--sun);
+      color: #3b2a00;
+      box-shadow: 0 5px 0 var(--sun-dark), 0 8px 18px rgba(245, 158, 11, 0.28);
+    }
+    .btn-success {
+      background: var(--success);
+      color: #ffffff;
+      box-shadow: 0 5px 0 #15803d;
+    }
+    .btn-danger {
+      background: var(--danger);
+      color: #ffffff;
+      box-shadow: 0 5px 0 #991b1b;
+    }
+    .btn-light {
+      background: #ffffff;
+      color: var(--primary-dark);
+      border: 2.5px solid var(--line);
+      box-shadow: 0 4px 0 var(--line);
+    }
+    .btn-light:hover { background: #f8fafc; }
+    .input {
+      width: 100%;
+      min-height: 56px;
+      padding: 14px 18px;
+      border: 3px solid var(--line);
+      border-radius: 18px;
+      margin-top: 10px;
+      outline: none;
+      background: #ffffff;
+      font-size: 16.5px;
+      font-weight: 800;
+      color: var(--dark);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.2);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .back {
+      width: 48px;
+      height: 48px;
+      flex: none;
+      border-radius: 16px;
+      background: #ffffff;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--primary-dark);
+      border: 2px solid var(--line);
+      box-shadow: 0 4px 0 var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, transform 0.12s;
+    }
+    .back:hover { background: var(--primary-light); }
+    .back:active { transform: translateY(2px); }
+    .header-title { font-size: 22px; font-weight: 900; margin: 0; color: var(--dark); }
+    .greeting {
+      background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+      color: #ffffff;
+      border-radius: 26px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      box-shadow: 0 5px 0 var(--primary-dark), 0 12px 24px rgba(14, 165, 233, 0.22);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .greeting-mascot {
+      width: 62px;
+      height: 62px;
+      flex: none;
+      animation: floatSlow 3s ease-in-out infinite;
+    }
+    .greeting h2 { margin: 0 0 4px; font-size: 21px; font-weight: 900; }
+    .greeting p { margin: 0; font-size: 14.5px; font-weight: 700; opacity: 0.96; line-height: 1.35; }
+    .home-progress {
+      background: #ffffff;
+      border-radius: 22px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      border: 2px solid var(--line);
+      box-shadow: 0 4px 0 var(--line);
+    }
+    .home-progress-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+    .home-progress-bar {
+      height: 14px;
+      background: var(--primary-light);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .home-progress-fill {
+      height: 100%;
+      width: 20%;
+      background: linear-gradient(90deg, var(--sun), #f59e0b);
+      border-radius: 99px;
+      transition: width 0.35s ease;
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .menu-card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 18px 16px;
+      min-height: 148px;
+      text-align: left;
+      border: 2px solid var(--line);
+      box-shadow: 0 5px 0 var(--line);
+      transition: transform 0.15s, border-color 0.15s;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+    .menu-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+    }
+    .menu-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 10px;
+      background: var(--primary-light);
+    }
+    .menu-card:nth-child(2) .menu-icon { background: var(--sun-light); }
+    .menu-card:nth-child(3) .menu-icon { background: var(--success-light); }
+    .menu-card:nth-child(4) .menu-icon { background: var(--warning-light); }
+    .menu-card h3 { font-size: 17px; font-weight: 900; margin: 0; color: var(--dark); }
+    .menu-card p { font-size: 13.5px; color: var(--muted); font-weight: 700; margin: 4px 0 0; line-height: 1.38; }
+    .card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 2px solid var(--line);
+      box-shadow: 0 4px 0 var(--line);
+    }
+    /* Materials interactive chips & illustration */
+    .material-tabs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 14px;
+    }
+    .material-chip {
+      flex: none;
+      min-width: 44px;
+      height: 44px;
+      padding: 0 12px;
+      border-radius: 99px;
+      background: #ffffff;
+      color: var(--dark);
+      font-weight: 900;
+      font-size: 15.5px;
+      border: 2px solid var(--line);
+      box-shadow: 0 3px 0 var(--line);
+      transition: all 0.15s;
+    }
+    .material-chip.active {
+      background: var(--sun);
+      color: #3b2a00;
+      border-color: var(--sun-dark);
+      box-shadow: 0 3px 0 var(--sun-dark);
+      transform: scale(1.05);
+    }
+    .material-illus {
+      background: linear-gradient(180deg, #0b3b66 0%, #0f5a94 100%);
+      border-radius: 20px;
+      height: 168px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #bae6fd;
+    }
+    .material-illus svg {
+      width: 100%;
+      height: 100%;
+    }
+    .material-card {
+      border-left: 6px solid var(--primary);
+      transition: transform 0.2s;
+    }
+    .material-card[hidden] { display: none !important; }
+    .material-number {
+      display: inline-block;
+      background: var(--sun-light);
+      color: #7a5200;
+      font-weight: 900;
+      font-size: 12.5px;
+      padding: 4px 12px;
+      border-radius: 99px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .material-card h3 { margin: 8px 0 8px; font-size: 20px; font-weight: 900; color: var(--dark); }
+    .material-card p { line-height: 1.62; color: var(--dark); font-size: 15.5px; font-weight: 600; margin: 0; }
+    .example {
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: var(--primary-light);
+      border-radius: 16px;
+      font-size: 14.5px;
+      color: var(--primary-dark);
+      font-weight: 800;
+      border: 1.5px solid #bae6fd;
+    }
+    .material-pager {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .material-pager .btn { margin-top: 0; min-height: 52px; font-size: 15.5px; }
+    .material-pager .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    /* Quiz / Game */
+    .score-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      border: 2px solid var(--line);
+      box-shadow: 0 4px 0 var(--line);
+      font-size: 14.5px;
+      font-weight: 800;
+    }
+    .score-pill {
+      background: var(--sun);
+      color: #3b2a00;
+      padding: 5px 12px;
+      border-radius: 99px;
+      font-weight: 900;
+      font-size: 15px;
+    }
+    .score-box span { font-weight: 900; color: var(--primary-dark); }
+    .score-pill span { color: #3b2a00; }
+    .level-box {
+      background: #ffffff;
+      border-radius: 22px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      border: 2px solid var(--line);
+      box-shadow: 0 4px 0 var(--line);
+    }
+    .level-title { font-size: 18px; font-weight: 900; color: var(--primary-dark); }
+    .level-desc { font-size: 13.5px; color: var(--muted); font-weight: 700; margin-top: 2px; }
+    .level-progress { display: flex; gap: 6px; margin-top: 12px; }
+    .level-item {
+      flex: 1;
+      text-align: center;
+      padding: 8px 2px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+      transition: all 0.2s;
+    }
+    .level-item.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 3px 0 var(--primary-dark);
+      transform: scale(1.04);
+    }
+    .level-item.done { background: var(--success-light); color: #166534; }
+    .question-card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 20px 18px;
+      border: 2px solid var(--line);
+      box-shadow: 0 5px 0 var(--line);
+    }
+    .question-number {
+      display: inline-block;
+      background: var(--sun-light);
+      color: #7a5200;
+      padding: 4px 12px;
+      border-radius: 99px;
+      font-weight: 900;
+      font-size: 12.5px;
+      margin-bottom: 10px;
+      letter-spacing: 0.4px;
+    }
+    .question {
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.55;
+      margin-bottom: 16px;
+      color: var(--dark);
+    }
+    .option {
+      width: 100%;
+      min-height: 58px;
+      padding: 12px 14px;
+      background: #ffffff;
+      border: 2.5px solid var(--line);
+      box-shadow: 0 4px 0 var(--line);
+      border-radius: 18px;
+      margin-bottom: 10px;
+      text-align: left;
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.15s ease;
+    }
+    .option-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 900;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+    }
+    .option:hover:not(:disabled) {
+      border-color: var(--primary);
+      background: var(--bg-sky);
+      transform: translateY(-1px);
+    }
+    .option.correct {
+      background: var(--success-light) !important;
+      border-color: var(--success) !important;
+      box-shadow: 0 4px 0 #86efac !important;
+      color: #166534 !important;
+    }
+    .option.correct .option-badge {
+      background: var(--success);
+      color: #ffffff;
+    }
+    .option.wrong {
+      background: var(--warning-light) !important;
+      border-color: var(--warning) !important;
+      box-shadow: 0 4px 0 #fdba74 !important;
+      color: #9a3412 !important;
+      animation: gentleShake 0.35s ease;
+    }
+    .option.wrong .option-badge {
+      background: var(--warning);
+      color: #ffffff;
+    }
+    .option:disabled { cursor: default; }
+    .feedback {
+      margin-top: 16px;
+      border-radius: 22px;
+      padding: 18px;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .feedback.correct { background: var(--success-light); border: 2.5px solid #86efac; }
+    .feedback.wrong { background: var(--warning-light); border: 2.5px solid #fdba74; }
+    .feedback-title { font-weight: 900; font-size: 18px; margin-bottom: 8px; }
+    .feedback.correct .feedback-title { color: #166534; }
+    .feedback.wrong .feedback-title { color: #9a3412; }
+    .explanation { font-size: 15px; font-weight: 700; line-height: 1.6; color: var(--dark); margin-bottom: 12px; }
+    .result { text-align: center; }
+    .result-icon { font-size: 64px; margin: 6px auto; animation: floatSlow 2.4s ease-in-out infinite; }
+    .result-stars { font-size: 34px; letter-spacing: 6px; margin: 4px 0 6px; }
+    .result h2 { color: var(--primary-dark); margin-bottom: 6px; font-size: 26px; font-weight: 900; }
+    .result-score { font-size: 56px; font-weight: 900; color: var(--primary-dark); line-height: 1; margin: 6px 0; }
+    .stats, .teacher-stat {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .stats { margin: 18px 0; }
+    .stat, .teacher-box {
+      background: #ffffff;
+      padding: 16px 12px;
+      border-radius: 20px;
+      text-align: center;
+      border: 2px solid var(--line);
+      box-shadow: 0 4px 0 var(--line);
+    }
+    .stat-number, .teacher-box strong {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--primary-dark);
+      display: block;
+    }
+    .stat-label, .teacher-box span { font-size: 13px; color: var(--muted); font-weight: 800; margin-top: 4px; display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; background: #ffffff; }
+    th, td { padding: 10px 8px; border-bottom: 1.5px solid var(--primary-light); text-align: center; font-weight: 700; }
+    th { background: var(--primary-light); color: var(--primary-dark); font-weight: 900; white-space: nowrap; }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 25px;
+      transform: translateX(-50%);
+      background: var(--dark);
+      color: #ffffff;
+      padding: 14px 22px;
+      border-radius: 16px;
+      font-size: 14.5px;
+      font-weight: 800;
+      z-index: 100;
+      max-width: min(90%, 460px);
+      box-shadow: 0 10px 25px rgba(15, 42, 67, 0.28);
+    }
+    .confirm-box {
+      border: 2.5px solid #fca5a5;
+      background: #fff1f2;
+      border-radius: 20px;
+      padding: 18px;
+      margin-top: 14px;
+    }
+    .nav-landing-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      text-decoration: none;
+      margin-bottom: 10px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid var(--line);
+      box-shadow: 0 3px 0 var(--line);
+      transition: all 0.2s;
+    }
+    .nav-landing-link:hover {
+      background: #ffffff;
+      transform: translateY(-1px);
+    }
+    @media (max-width: 380px) {
+      .screen { padding: 18px 14px 76px; }
+      .title { font-size: 34px; }
+      .menu-card { padding: 14px 12px; min-height: 136px; }
+    }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Link Back to Landing Page -->
+  <a href="index.html" class="nav-landing-link">
+    <span>🌐</span> Kembali ke Halaman Utama LENSA
+  </a>
+
+  <div class="app">
+    <main>
+      <!-- SCREEN: HOME / OPENING -->
+      <section id="home" class="screen center-screen active" aria-labelledby="app-title">
+        <div>
+          <!-- Beautiful SVG Illustration replacing broken canva link -->
+          <img class="opening-illustration" src="assets/hero-illustration.svg" alt="Ilustrasi LENSA - Pembelajaran Sifat Cahaya Interaktif" loading="eager">
+          <h1 id="app-title" class="title">LENSA</h1>
+          <p class="subtitle">Layar Edukasi Nalar Sains Anak</p>
+          <p class="slogan">“Belajar Cahaya Jadi Lebih Seru!”</p>
+          
+          <div class="opening-actions" aria-label="Pilihan masuk">
+            <button type="button" class="btn btn-student" data-go="studentLogin">
+              <span>👨‍🎓</span> MASUK SEBAGAI SISWA
+            </button>
+            <button type="button" class="btn btn-secondary" data-go="teacher">
+              <span>👩‍🏫</span> MASUK SEBAGAI GURU
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN: ROLE SELECTION -->
+      <section id="role" class="screen center-screen" aria-labelledby="role-title">
+        <div>
+          <div class="header">
+            <button type="button" class="back" data-go="home" aria-label="Kembali">←</button>
+            <h2 id="role-title" class="header-title">Masuk Sebagai</h2>
+          </div>
+          <button type="button" class="btn btn-student" data-go="studentLogin">
+            👨‍🎓 MASUK SEBAGAI SISWA
+          </button>
+          <button type="button" class="btn btn-secondary" id="teacher-entry">
+            👩‍🏫 MASUK SEBAGAI GURU
+          </button>
+        </div>
+      </section>
+
+      <!-- SCREEN: STUDENT LOGIN -->
+      <section id="studentLogin" class="screen center-screen" aria-labelledby="login-title">
+        <div>
+          <div class="header">
+            <button type="button" class="back" data-go="home" aria-label="Kembali">←</button>
+            <h2 id="login-title" class="header-title">Kenalan Dulu, Yuk!</h2>
+          </div>
+          <form id="student-form" class="card text-center">
+            <svg class="mx-auto my-2" width="88" height="88" viewBox="0 0 64 64" aria-hidden="true">
+              <circle cx="32" cy="32" r="28" fill="#FFC93C" stroke="#E8A200" stroke-width="2.5"/>
+              <circle cx="23" cy="28" r="4.8" fill="#0F2A43"/>
+              <circle cx="41" cy="28" r="4.8" fill="#0F2A43"/>
+              <circle cx="24.5" cy="26.5" r="1.6" fill="#FFFFFF"/>
+              <circle cx="42.5" cy="26.5" r="1.6" fill="#FFFFFF"/>
+              <path d="M21 39 Q32 49 43 39" stroke="#0F2A43" stroke-width="4" fill="none" stroke-linecap="round"/>
+            </svg>
+            <label for="studentName" class="block text-center font-black my-2 text-slate-800 text-lg">
+              Halo! Siapa namamu?
+            </label>
+            <input id="studentName" class="input" type="text" maxlength="50" autocomplete="name" placeholder="Tuliskan nama lengkapmu di sini..." required>
+            <button type="submit" class="btn btn-primary">
+              🚀 AYO MULAI BELAJAR
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- SCREEN: STUDENT HOME -->
+      <section id="studentHome" class="screen" aria-label="Beranda siswa">
+        <div class="greeting">
+          <svg class="greeting-mascot" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="32" r="28" fill="#FFC93C" stroke="#FFFFFF" stroke-width="2.5"/>
+            <circle cx="23" cy="28" r="4.8" fill="#0F2A43"/>
+            <circle cx="41" cy="28" r="4.8" fill="#0F2A43"/>
+            <circle cx="24.5" cy="26.5" r="1.5" fill="#FFFFFF"/>
+            <circle cx="42.5" cy="26.5" r="1.5" fill="#FFFFFF"/>
+            <path d="M21 39 Q32 49 43 39" stroke="#0F2A43" stroke-width="4" fill="none" stroke-linecap="round"/>
+          </svg>
+          <div>
+            <h2>Halo, <span id="welcomeName">Siswa</span>! 👋</h2>
+            <p>Siap jadi detektif cahaya di laboratorium LENSA hari ini?</p>
+          </div>
+        </div>
+        <div class="home-progress" id="homeProgressCard" aria-label="Progres belajar siswa">
+          <div class="home-progress-top">
+            <span id="homeProgressText">Petualanganmu: Siap dimulai ⭐</span>
+            <span id="homeBestScore" class="text-sky-700">Skor Terbaik: 0</span>
+          </div>
+          <div class="home-progress-bar">
+            <div class="home-progress-fill" id="homeProgressFill" style="width: 12%"></div>
+          </div>
+        </div>
+        <nav class="menu-grid" aria-label="Menu siswa">
+          <button type="button" class="menu-card" data-go="materials">
+            <div class="menu-icon">📘</div>
+            <h3>Materi</h3>
+            <p>Pelajari 6 sifat cahaya dengan ilustrasi seru.</p>
+          </button>
+          <button type="button" class="menu-card" id="game-menu">
+            <div class="menu-icon">🎮</div>
+            <h3>Game Edukasi</h3>
+            <p>Uji nalar & kemampuan berpikir C1–C5.</p>
+          </button>
+          <button type="button" class="menu-card" id="results-menu">
+            <div class="menu-icon">🏆</div>
+            <h3>Hasil Belajar</h3>
+            <p>Lihat pencapaian skor, bintang, dan levelmu.</p>
+          </button>
+          <button type="button" class="menu-card" id="profile-menu">
+            <div class="menu-icon">🧑‍🚀</div>
+            <h3>Profil</h3>
+            <p>Lihat peta penguasaan C1 hingga C5.</p>
+          </button>
+        </nav>
+        <button type="button" class="btn btn-light" data-go="home">
+          🚪 Ganti Pengguna / Keluar
+        </button>
+      </section>
+
+      <!-- SCREEN: MATERIALS (6 SIFAT CAHAYA) -->
+      <section id="materials" class="screen" aria-labelledby="materials-title">
+        <div class="header">
+          <button type="button" class="back" data-go="studentHome" aria-label="Kembali">←</button>
+          <h2 id="materials-title" class="header-title">Enam Sifat Cahaya</h2>
+        </div>
+
+        <div class="material-tabs" id="materialTabs" role="tablist" aria-label="Pilih sifat cahaya">
+          <button type="button" class="material-chip active" data-mat-tab="0" aria-label="Sifat Cahaya 1">1</button>
+          <button type="button" class="material-chip" data-mat-tab="1" aria-label="Sifat Cahaya 2">2</button>
+          <button type="button" class="material-chip" data-mat-tab="2" aria-label="Sifat Cahaya 3">3</button>
+          <button type="button" class="material-chip" data-mat-tab="3" aria-label="Sifat Cahaya 4">4</button>
+          <button type="button" class="material-chip" data-mat-tab="4" aria-label="Sifat Cahaya 5">5</button>
+          <button type="button" class="material-chip" data-mat-tab="5" aria-label="Sifat Cahaya 6">6</button>
+          <button type="button" class="material-chip" data-mat-tab="all" aria-label="Lihat semua sifat cahaya">Semua (6)</button>
+        </div>
+
+        <article class="card material-card" data-mat-card="0">
+          <div class="material-illus" aria-hidden="true">
+            <svg viewBox="0 0 340 168" preserveAspectRatio="xMidYMid meet">
+              <polygon points="62,74 328,44 328,124 62,94" fill="#FFC93C" opacity="0.28"/>
+              <line x1="62" y1="84" x2="320" y2="84" stroke="#FFF3B0" stroke-width="6" stroke-linecap="round"/>
+              <rect x="16" y="66" width="46" height="36" rx="8" fill="#FFC93C" stroke="#E8A200" stroke-width="2.5"/>
+              <rect x="28" y="78" width="12" height="12" rx="6" fill="#0F2A43"/>
+              <circle cx="290" cy="84" r="8" fill="#FFF3B0"/>
+            </svg>
+          </div>
+          <div class="material-number">Sifat Cahaya 1 / 6</div>
+          <h3>☀️ Cahaya Merambat Lurus</h3>
+          <p>Cahaya bergerak dari sumbernya dalam garis lurus tanpa membelok sendiri jika mediumnya sama. Kita dapat melihat berkas cahaya senter yang lurus menembus kegelapan.</p>
+          <div class="example">💡 Contoh: Berkas sinar senter di malam hari atau cahaya matahari yang menembus celah pepohonan.</div>
+        </article>
+
+        <article class="card material-card" data-mat-card="1" hidden>
+          <div class="material-illus" aria-hidden="true">
+            <svg viewBox="0 0 340 168" preserveAspectRatio="xMidYMid meet">
+              <line x1="20" y1="84" x2="320" y2="84" stroke="#FFC93C" stroke-width="14" stroke-linecap="round" opacity="0.35"/>
+              <line x1="20" y1="84" x2="320" y2="84" stroke="#FFF3B0" stroke-width="5" stroke-linecap="round"/>
+              <rect x="142" y="22" width="56" height="124" rx="10" fill="#BAE6FD" fill-opacity="0.55" stroke="#FFFFFF" stroke-width="3"/>
+              <line x1="154" y1="36" x2="154" y2="128" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
+              <circle cx="40" cy="84" r="18" fill="#FFC93C"/>
+            </svg>
+          </div>
+          <div class="material-number">Sifat Cahaya 2 / 6</div>
+          <h3>🪟 Cahaya Menembus Benda Bening</h3>
+          <p>Benda bening (transparan) meneruskan hampir seluruh cahaya yang mengenainya sehingga benda di baliknya terlihat jelas.</p>
+          <div class="example">💡 Contoh: Cahaya matahari yang masuk melalui kaca jendela atau kaca akuarium ikan.</div>
+        </article>
+
+        <article class="card material-card" data-mat-card="2" hidden>
+          <div class="material-illus" aria-hidden="true">
+            <svg viewBox="0 0 340 168" preserveAspectRatio="xMidYMid meet">
+              <line x1="36" y1="30" x2="170" y2="126" stroke="#FFC93C" stroke-width="10" stroke-linecap="round" opacity="0.35"/>
+              <line x1="170" y1="126" x2="304" y2="30" stroke="#FFC93C" stroke-width="10" stroke-linecap="round" opacity="0.35"/>
+              <line x1="36" y1="30" x2="170" y2="126" stroke="#FFF3B0" stroke-width="4.5" stroke-linecap="round"/>
+              <line x1="170" y1="126" x2="304" y2="30" stroke="#FFF3B0" stroke-width="4.5" stroke-linecap="round"/>
+              <rect x="96" y="126" width="148" height="14" rx="6" fill="#BAE6FD" stroke="#FFFFFF" stroke-width="2.5"/>
+              <circle cx="170" cy="126" r="6" fill="#FFC93C"/>
+            </svg>
+          </div>
+          <div class="material-number">Sifat Cahaya 3 / 6</div>
+          <h3>🪞 Cahaya Dapat Dipantulkan</h3>
+          <p>Ketika cahaya mengenai permukaan benda (terutama permukaan yang rata dan mengilap), berkas cahaya akan memantul kembali.</p>
+          <div class="example">💡 Contoh: Kita dapat melihat bayangan diri kita di cermin datar atau pantulan pohon di permukaan danau yang tenang.</div>
+        </article>
+
+        <article class="card material-card" data-mat-card="3" hidden>
+          <div class="material-illus" aria-hidden="true">
+            <svg viewBox="0 0 340 168" preserveAspectRatio="xMidYMid meet">
+              <rect x="0" y="86" width="340" height="82" fill="#38BDF8" fill-opacity="0.45"/>
+              <line x1="0" y1="86" x2="340" y2="86" stroke="#BAE6FD" stroke-width="2.5" stroke-dasharray="6 4"/>
+              <line x1="56" y1="20" x2="168" y2="86" stroke="#FFF3B0" stroke-width="5" stroke-linecap="round"/>
+              <line x1="168" y1="86" x2="232" y2="152" stroke="#FFC93C" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="168" cy="86" r="6" fill="#FFFFFF"/>
+            </svg>
+          </div>
+          <div class="material-number">Sifat Cahaya 4 / 6</div>
+          <h3>🥤 Cahaya Dapat Dibiaskan</h3>
+          <p>Pembiasan (refraksi) adalah pembelokan arah rambat cahaya saat melewati dua medium dengan kerapatan optik yang berbeda (seperti udara ke air).</p>
+          <div class="example">💡 Contoh: Pensil yang dimasukkan ke gelas berisi air tampak patah atau kolam renang terlihat lebih dangkal dari aslinya.</div>
+        </article>
+
+        <article class="card material-card" data-mat-card="4" hidden>
+          <div class="material-illus" aria-hidden="true">
+            <svg viewBox="0 0 340 168" preserveAspectRatio="xMidYMid meet">
+              <line x1="22" y1="88" x2="142" y2="88" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+              <g stroke-width="5.5" stroke-linecap="round">
+                <line x1="186" y1="74" x2="318" y2="34" stroke="#EF4444"/>
+                <line x1="188" y1="80" x2="318" y2="54" stroke="#F97316"/>
+                <line x1="190" y1="86" x2="318" y2="74" stroke="#FACC15"/>
+                <line x1="192" y1="92" x2="318" y2="94" stroke="#22C55E"/>
+                <line x1="194" y1="98" x2="318" y2="114" stroke="#38BDF8"/>
+                <line x1="196" y1="104" x2="318" y2="134" stroke="#A855F7"/>
+              </g>
+              <polygon points="166,30 214,132 118,132" fill="#BAE6FD" fill-opacity="0.65" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="material-number">Sifat Cahaya 5 / 6</div>
+          <h3>🌈 Cahaya Dapat Diuraikan</h3>
+          <p>Cahaya putih (polikromatik) dari matahari sebenarnya gabungan dari spektrum banyak warna (merah, jingga, kuning, hijau, biru, nila, ungu) yang dapat diuraikan saat melewati prisma atau tetes air.</p>
+          <div class="example">💡 Contoh: Terbentuknya pelangi di langit setelah hujan saat sinar matahari mengenai titik-titik air hujan.</div>
+        </article>
+
+        <article class="card material-card" data-mat-card="5" hidden>
+          <div class="material-illus" aria-hidden="true">
+            <svg viewBox="0 0 340 168" preserveAspectRatio="xMidYMid meet">
+              <circle cx="44" cy="84" r="22" fill="#FFC93C"/>
+              <line x1="68" y1="76" x2="142" y2="54" stroke="#FFF3B0" stroke-width="3.5" stroke-linecap="round"/>
+              <line x1="68" y1="92" x2="142" y2="114" stroke="#FFF3B0" stroke-width="3.5" stroke-linecap="round"/>
+              <polygon points="168,52 324,32 324,136 168,116" fill="#061A2E" opacity="0.65"/>
+              <rect x="142" y="48" width="28" height="72" rx="10" fill="#0EA5E9" stroke="#FFFFFF" stroke-width="2.5"/>
+            </svg>
+          </div>
+          <div class="material-number">Sifat Cahaya 6 / 6</div>
+          <h3>🌑 Cahaya Membentuk Bayangan</h3>
+          <p>Ketika cahaya yang merambat lurus terhalang oleh benda gelap (tidak tembus cahaya), maka di belakang benda tersebut akan tercipta daerah gelap yang disebut bayangan.</p>
+          <div class="example">💡 Contoh: Bayangan tubuh kita yang selalu mengikuti saat berjalan di bawah sinar matahari atau lampu sorot.</div>
+        </article>
+
+        <div class="material-pager" id="materialPager">
+          <button type="button" class="btn btn-light" id="matPrev">← Sebelumnya</button>
+          <button type="button" class="btn btn-student" id="matNext">Sifat Berikutnya →</button>
+        </div>
+
+        <button type="button" class="btn btn-primary" data-start-game>
+          🎮 MULAI GAME EDUKASI C1–C5
+        </button>
+      </section>
+
+      <!-- SCREEN: GAME (BLOOM C1 - C5) -->
+      <section id="game" class="screen" aria-labelledby="game-title">
+        <div class="header">
+          <button type="button" class="back" data-go="studentHome" aria-label="Kembali">←</button>
+          <h2 id="game-title" class="header-title">Game Edukasi</h2>
+        </div>
+        <div class="score-box">
+          <div class="score-pill">⭐ Skor: <span id="gameScore">0</span></div>
+          <div>Soal ke: <span id="questionCount">1</span></div>
+        </div>
+        <div class="level-box">
+          <div id="levelTitle" class="level-title">C1 – Mengingat</div>
+          <div id="levelDesc" class="level-desc">Mengingat fakta dan konsep.</div>
+          <div class="level-progress" aria-label="Perkembangan level">
+            <div class="level-item active" id="level1">C1</div>
+            <div class="level-item" id="level2">C2</div>
+            <div class="level-item" id="level3">C3</div>
+            <div class="level-item" id="level4">C4</div>
+            <div class="level-item" id="level5">C5</div>
+          </div>
+        </div>
+        <div id="questionArea"></div>
+      </section>
+
+      <!-- SCREEN: RESULT -->
+      <section id="result" class="screen" aria-labelledby="result-title">
+        <div class="header">
+          <button type="button" class="back" data-go="studentHome" aria-label="Kembali">←</button>
+          <h2 id="result-title" class="header-title">Hasil Belajar</h2>
+        </div>
+        <div class="card result">
+          <div class="result-icon">🏆</div>
+          <h2>Hebat, Petualangan Selesai!</h2>
+          <div id="resultStars" class="result-stars" aria-label="Bintang apresiasi">⭐⭐⭐</div>
+          <p id="resultName" class="font-extrabold text-slate-700 text-base"></p>
+          <div class="result-score" id="resultScore">0</div>
+          <p class="text-slate-500 font-extrabold text-sm">Skor Akhir</p>
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-number text-emerald-600" id="resultCorrect">0</div>
+              <div class="stat-label">Jawaban Benar</div>
+            </div>
+            <div class="stat">
+              <div class="stat-number text-amber-600" id="resultWrong">0</div>
+              <div class="stat-label">Perlu Diulang</div>
+            </div>
+          </div>
+          <div class="card bg-sky-50 border border-sky-200">
+            <strong class="text-slate-800">Tingkat Nalar Tertinggi</strong>
+            <div id="highestLevel" class="text-2xl font-black text-sky-700 mt-1">C1</div>
+          </div>
+          <div class="card bg-amber-50/70 border border-amber-200">
+            <strong class="text-slate-800">Status Capaian Belajar</strong>
+            <p id="resultStatus" class="mt-1 font-black text-lg text-sky-800"></p>
+          </div>
+        </div>
+        <button type="button" class="btn btn-student" data-start-game>
+          🔄 MAIN LAGI & TINGKATKAN SKOR
+        </button>
+        <button type="button" class="btn btn-secondary" data-go="materials">
+          📘 ULANGI BACA MATERI
+        </button>
+      </section>
+
+      <!-- SCREEN: PROFILE -->
+      <section id="profile" class="screen" aria-labelledby="profile-title">
+        <div class="header">
+          <button type="button" class="back" data-go="studentHome" aria-label="Kembali">←</button>
+          <h2 id="profile-title" class="header-title">Profil Siswa</h2>
+        </div>
+        <div class="card text-center">
+          <svg class="mx-auto my-1" width="80" height="80" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="32" r="28" fill="#FFC93C" stroke="#E8A200" stroke-width="2.5"/>
+            <circle cx="23" cy="28" r="4.8" fill="#0F2A43"/>
+            <circle cx="41" cy="28" r="4.8" fill="#0F2A43"/>
+            <circle cx="24.5" cy="26.5" r="1.5" fill="#FFFFFF"/>
+            <circle cx="42.5" cy="26.5" r="1.5" fill="#FFFFFF"/>
+            <path d="M21 39 Q32 49 43 39" stroke="#0F2A43" stroke-width="4" fill="none" stroke-linecap="round"/>
+          </svg>
+          <h3 id="profileName" class="font-black text-xl text-slate-800 mt-2">Nama Siswa</h3>
+          <p class="text-sky-700 font-extrabold text-sm mt-1">Siswa Peneliti Sains LENSA</p>
+        </div>
+        <div class="card">
+          <h3 class="font-black text-lg text-slate-800">Peta Kemampuan Nalar (Bloom)</h3>
+          <p class="text-sm font-bold text-slate-500 mb-3">Tingkat berpikir yang sudah berhasil kamu kuasai:</p>
+          <div id="profileProgress" class="space-y-2.5"></div>
+        </div>
+      </section>
+
+      <!-- SCREEN: TEACHER DASHBOARD -->
+      <section id="teacher" class="screen" aria-labelledby="teacher-title">
+        <div class="header">
+          <button type="button" class="back" data-go="home" aria-label="Kembali">←</button>
+          <h2 id="teacher-title" class="header-title">Dashboard Guru</h2>
+        </div>
+        <div class="teacher-stat">
+          <div class="teacher-box">
+            <strong id="totalStudents">0</strong>
+            <span>Jumlah Siswa</span>
+          </div>
+          <div class="teacher-box">
+            <strong id="averageScore">0</strong>
+            <span>Rata-rata Skor</span>
+          </div>
+          <div class="teacher-box">
+            <strong id="c5Students">0</strong>
+            <span>Mencapai C5</span>
+          </div>
+          <div class="teacher-box">
+            <strong id="excellentStudents">0</strong>
+            <span>Predikat Sangat Baik</span>
+          </div>
+        </div>
+        <div class="card mt-5 overflow-x-auto">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-black text-base text-slate-800">📊 Rekapitulasi Nilai Siswa</h3>
+            <button type="button" id="export-csv" class="text-xs bg-sky-50 text-sky-800 px-3 py-2 rounded-xl font-extrabold border-2 border-sky-200 hover:bg-sky-100 transition">
+              📥 Unduh CSV
+            </button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama</th>
+                <th>Skor</th>
+                <th>Benar</th>
+                <th>Salah</th>
+                <th>Level</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="studentTable"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn btn-light" id="refresh-button">
+          🔄 REFRESH DATA
+        </button>
+        <button type="button" class="btn btn-danger" id="delete-button">
+          🗑️ HAPUS SEMUA DATA
+        </button>
+        <div id="delete-confirmation" class="confirm-box" hidden>
+          <p class="font-bold text-slate-800 text-sm">
+            Apakah Bapak/Ibu yakin ingin menghapus seluruh data siswa di browser ini?
+          </p>
+          <button type="button" class="btn btn-danger" id="confirm-delete">
+            Ya, hapus semua data
+          </button>
+          <button type="button" class="btn btn-light" id="cancel-delete">
+            Batal
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script>
+    // Audio synthesizer for educational feedback (Zero external audio dependency)
+    const audioContext = window.AudioContext || window.webkitAudioContext;
+    let ctx = null;
+    function playBeep(type) {
+      try {
+        if (!ctx) ctx = new audioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        if (type === 'correct') {
+          // Cheerful chime (two ascending tones)
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc1.type = 'sine';
+          osc2.type = 'triangle';
+          osc1.frequency.setValueAtTime(523.25, now); // C5
+          osc1.frequency.exponentialRampToValueAtTime(659.25, now + 0.12); // E5
+          osc2.frequency.setValueAtTime(783.99, now + 0.12); // G5
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(ctx.destination);
+          osc1.start(now);
+          osc2.start(now + 0.12);
+          osc1.stop(now + 0.35);
+          osc2.stop(now + 0.35);
+        } else if (type === 'wrong') {
+          // Low gentle thud
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.001, now + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        }
+      } catch (e) {
+        // Audio optional fallback
+      }
+    }
+
+    // 25 Soal Lengkap Berbasis Taksonomi Bloom (C1-C5)
+    const questionBank = [
+      // C1: Mengingat
+      {id:1,level:"C1",question:"Sifat cahaya yang menunjukkan bahwa cahaya bergerak dalam satu arah lurus disebut ...",options:["Cahaya merambat lurus","Cahaya dibiaskan","Cahaya dipantulkan","Cahaya diuraikan"],answer:0,explanation:"Cahaya dapat merambat lurus. Contohnya dapat dilihat pada cahaya senter yang bergerak lurus."},
+      {id:2,level:"C1",question:"Benda yang dapat ditembus cahaya disebut benda ...",options:["Gelap","Bening","Buram","Padat"],answer:1,explanation:"Benda bening atau transparan dapat ditembus oleh cahaya, contohnya kaca jendela."},
+      {id:3,level:"C1",question:"Permukaan yang biasa digunakan untuk memantulkan cahaya dan menghasilkan bayangan adalah ...",options:["Kertas","Cermin","Kain","Karton"],answer:1,explanation:"Cermin memiliki permukaan yang dapat memantulkan cahaya dengan baik sehingga kita dapat melihat bayangan."},
+      {id:4,level:"C1",question:"Perubahan arah rambat cahaya ketika melewati dua medium yang berbeda disebut ...",options:["Pemantulan","Pembiasan","Penguraian","Penyerapan"],answer:1,explanation:"Perubahan arah rambat cahaya ketika melewati medium berbeda disebut pembiasan cahaya."},
+      {id:5,level:"C1",question:"Peristiwa terurainya cahaya putih menjadi berbagai warna disebut ...",options:["Pembiasan","Pemantulan","Penguraian","Perambatan"],answer:2,explanation:"Cahaya putih dapat diuraikan menjadi berbagai warna. Salah satu contohnya adalah pembentukan pelangi."},
+      // C2: Memahami
+      {id:6,level:"C2",question:"Mengapa cahaya dari senter dapat terlihat sebagai berkas yang bergerak lurus?",options:["Karena cahaya merambat lurus","Karena cahaya selalu berputar","Karena cahaya tidak dapat bergerak","Karena cahaya memiliki warna"],answer:0,explanation:"Cahaya merambat lurus sehingga berkas cahaya senter dapat terlihat bergerak dalam arah yang lurus."},
+      {id:7,level:"C2",question:"Mengapa cahaya matahari dapat masuk ke dalam rumah melalui jendela kaca?",options:["Kaca menghasilkan cahaya","Kaca dapat ditembus cahaya","Kaca memantulkan semua cahaya","Kaca mengubah cahaya menjadi suara"],answer:1,explanation:"Kaca merupakan benda bening sehingga sebagian besar cahaya dapat melewatinya."},
+      {id:8,level:"C2",question:"Mengapa kita dapat melihat wajah ketika berdiri di depan cermin?",options:["Cermin menghasilkan wajah","Cermin menyerap wajah","Cahaya dari wajah dipantulkan oleh cermin","Cermin membuat cahaya menjadi gelap"],answer:2,explanation:"Cahaya yang mengenai wajah dipantulkan oleh permukaan cermin menuju mata sehingga wajah dapat terlihat."},
+      {id:9,level:"C2",question:"Pensil yang dimasukkan ke dalam gelas berisi air tampak seperti bengkok. Peristiwa ini terjadi karena ...",options:["Pensil berubah bentuk","Cahaya mengalami pembiasan","Air menghilangkan pensil","Cahaya berhenti bergerak"],answer:1,explanation:"Pensil terlihat bengkok karena cahaya mengalami perubahan arah ketika berpindah dari air ke udara."},
+      {id:10,level:"C2",question:"Pelangi dapat memiliki banyak warna karena ...",options:["Cahaya putih dapat diuraikan menjadi berbagai warna","Air selalu berwarna-warni","Awan menghasilkan warna","Mata manusia menciptakan warna"],answer:0,explanation:"Cahaya putih matahari dapat diuraikan menjadi berbagai warna ketika mengalami proses tertentu pada titik-titik air."},
+      // C3: Menerapkan
+      {id:11,level:"C3",question:"Rani membuat percobaan menggunakan tiga karton yang masing-masing memiliki lubang. Agar cahaya senter dapat melewati ketiga lubang, posisi lubang harus ...",options:["Dibuat tidak sejajar","Dibuat sejajar","Ditutup semua","Diletakkan berjauhan tanpa arah"],answer:1,explanation:"Karena cahaya merambat lurus, lubang harus berada pada satu garis lurus agar cahaya dapat melewatinya."},
+      {id:12,level:"C3",question:"Doni ingin membuat penutup kotak yang tetap memungkinkan cahaya masuk. Bahan yang paling tepat adalah ...",options:["Karton tebal","Kaca bening","Kain hitam","Kayu"],answer:1,explanation:"Kaca bening dapat ditembus cahaya sehingga cocok digunakan jika cahaya ingin tetap masuk ke dalam kotak."},
+      {id:13,level:"C3",question:"Ani ingin melihat bagian belakang kepalanya menggunakan satu cermin. Cara yang tepat adalah ...",options:["Menggunakan cermin untuk memantulkan cahaya dari bagian belakang menuju mata","Menutup cermin","Menjauhkan cermin tanpa melihatnya","Menggunakan kain"],answer:0,explanation:"Cermin dapat digunakan untuk mengubah arah cahaya melalui pemantulan sehingga bagian yang tidak langsung terlihat dapat diamati."},
+      {id:14,level:"C3",question:"Untuk menunjukkan pembiasan cahaya, alat yang paling sesuai adalah ...",options:["Gelas berisi air dan pensil","Karton hitam saja","Cermin tanpa cahaya","Kain kering"],answer:0,explanation:"Pensil yang dimasukkan ke dalam air dapat menunjukkan perubahan arah cahaya sehingga tampak seperti bengkok."},
+      {id:15,level:"C3",question:"Budi berdiri di bawah sinar matahari. Bayangan tubuhnya dapat terbentuk karena ...",options:["Tubuhnya menghalangi cahaya","Tubuhnya menghasilkan cahaya","Cahaya tidak bergerak","Tanah menghasilkan bayangan"],answer:0,explanation:"Tubuh Budi menghalangi cahaya sehingga daerah di belakang tubuh yang tidak terkena cahaya membentuk bayangan."},
+      // C4: Menganalisis
+      {id:16,level:"C4",question:"Dalam percobaan, tiga lubang karton awalnya sejajar sehingga cahaya senter dapat melewatinya. Ketika karton kedua digeser, cahaya tidak lagi terlihat pada karton ketiga. Kesimpulan yang paling tepat adalah ...",options:["Cahaya berubah warna","Cahaya merambat lurus","Cahaya tidak dapat melewati karton","Cahaya berubah menjadi panas"],answer:1,explanation:"Ketika karton digeser, jalur lurus cahaya terputus. Hal tersebut menunjukkan bahwa cahaya merambat lurus."},
+      {id:17,level:"C4",question:"Tiga bahan digunakan untuk menutup jendela: kaca bening, karton, dan kain. Cahaya paling banyak masuk melalui kaca. Analisis yang tepat adalah ...",options:["Kaca merupakan benda bening","Karton menghasilkan cahaya","Kain menghasilkan cahaya","Kaca tidak dapat ditembus cahaya"],answer:0,explanation:"Kaca bening dapat ditembus cahaya lebih baik dibandingkan karton dan kain yang menghalangi cahaya."},
+      {id:18,level:"C4",question:"Sebuah senter diarahkan ke cermin dan cahaya kemudian mengenai dinding di samping cermin. Peristiwa tersebut menunjukkan bahwa ...",options:["Cahaya dapat dipantulkan dan berubah arah","Cahaya selalu bergerak ke bawah","Cermin menyerap semua cahaya","Dinding menghasilkan cahaya"],answer:0,explanation:"Ketika cahaya mengenai cermin, cahaya dipantulkan sehingga arah rambatnya berubah dan dapat mengenai dinding."},
+      {id:19,level:"C4",question:"Seorang siswa memasukkan pensil ke dalam gelas berisi air. Bagian pensil di dalam air tampak tidak segaris dengan bagian yang berada di udara. Penyebabnya adalah ...",options:["Pensil benar-benar patah","Cahaya mengalami pembiasan","Air mengubah bentuk pensil","Mata siswa rusak"],answer:1,explanation:"Pensil sebenarnya tidak patah. Perbedaan arah cahaya ketika melewati air dan udara menyebabkan pensil tampak bengkok."},
+      {id:20,level:"C4",question:"Setelah hujan, cahaya matahari mengenai banyak titik air di udara dan tampak berbagai warna di langit. Berdasarkan peristiwa tersebut, sifat cahaya yang dapat dianalisis adalah ...",options:["Cahaya dapat diuraikan","Cahaya tidak dapat bergerak","Cahaya selalu berwarna hitam","Cahaya tidak dapat melewati air"],answer:0,explanation:"Titik-titik air dapat membantu menguraikan cahaya matahari sehingga tampak berbagai warna seperti pada pelangi."},
+      // C5: Mengevaluasi
+      {id:21,level:"C5",question:"Dua kelompok melakukan percobaan cahaya merambat lurus. Kelompok A menggunakan tiga lubang yang sejajar, sedangkan kelompok B menggunakan lubang yang tidak sejajar. Percobaan manakah yang lebih tepat untuk membuktikan cahaya merambat lurus?",options:["Kelompok A, karena cahaya dapat melewati lubang yang sejajar","Kelompok B, karena lubang tidak sejajar","Keduanya tidak tepat","Kelompok B, karena cahaya dapat berbelok"],answer:0,explanation:"Kelompok A lebih tepat karena cahaya dapat melewati tiga lubang yang sejajar jika cahaya merambat lurus."},
+      {id:22,level:"C5",question:"Sebuah kelas ingin membuat ruang belajar yang mendapat cahaya alami tetapi tetap terlindung dari angin. Pilihan bahan jendela yang paling tepat adalah ...",options:["Karton","Kaca bening","Kayu","Kain tebal"],answer:1,explanation:"Kaca bening dapat ditembus cahaya sehingga cahaya alami dapat masuk ke ruangan."},
+      {id:23,level:"C5",question:"Sebuah ruangan memiliki bagian yang terlalu gelap. Guru ingin memanfaatkan cahaya dari lampu agar cahaya dapat diarahkan ke bagian tersebut. Benda yang paling tepat digunakan adalah ...",options:["Cermin","Kain hitam","Karton","Busa"],answer:0,explanation:"Cermin dapat memantulkan cahaya sehingga arah cahaya dari lampu dapat diubah menuju bagian ruangan yang lebih gelap."},
+      {id:24,level:"C5",question:"Siswa ingin melakukan percobaan untuk menunjukkan pembiasan cahaya. Manakah rancangan yang paling tepat?",options:["Memasukkan pensil ke dalam gelas berisi air dan mengamati dari samping","Menutup gelas dengan karton","Meletakkan pensil di meja tanpa air","Mematikan semua cahaya"],answer:0,explanation:"Pensil dalam gelas berisi air dapat menunjukkan pembiasan karena cahaya berpindah dari air ke udara sebelum masuk ke mata."},
+      {id:25,level:"C5",question:"Seorang siswa ingin menunjukkan bahwa cahaya putih dapat menghasilkan berbagai warna. Percobaan yang paling sesuai adalah ...",options:["Mengamati pelangi atau menggunakan prisma untuk menguraikan cahaya","Menutup sumber cahaya dengan kain hitam","Meletakkan benda di tempat gelap","Menggunakan karton tanpa cahaya"],answer:0,explanation:"Pelangi dan prisma dapat menunjukkan bahwa cahaya putih dapat diuraikan menjadi berbagai warna."}
+    ];
+
+    const $ = id => document.getElementById(id);
+    const levels = ["", "C1 – Mengingat", "C2 – Memahami", "C3 – Menerapkan", "C4 – Menganalisis", "C5 – Mengevaluasi"];
+    const descriptions = [
+      "",
+      "Mengingat fakta dasar dan konsep sains.",
+      "Memahami dan menjelaskan fenomena cahaya.",
+      "Menerapkan konsep pada situasi konkret.",
+      "Menganalisis hubungan sebab-akibat percobaan.",
+      "Mengevaluasi dan memilih solusi terbaik."
+    ];
+
+    let studentName = "";
+    let currentLevel = 1;
+    let score = 0;
+    let correctAnswers = 0;
+    let wrongAnswers = 0;
+    let questionNumber = 0;
+    let highestLevel = 1;
+    let usedQuestions = [];
+    let activeQuestion = null;
+    let answered = false;
+    let toastTimer;
+
+    function readJSON(key, fallback) {
+      try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+      catch { return fallback; }
+    }
+
+    function showToast(message) {
+      const toast = $("toast");
+      toast.textContent = message;
+      toast.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.hidden = true, 3200);
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll(".screen").forEach(el => el.classList.toggle("active", el.id === id));
+      if (id === "studentHome") updateHomeProgress();
+      if (id === "teacher") loadTeacherData();
+      window.scrollTo(0, 0);
+    }
+
+    function updateHomeProgress() {
+      const allResults = readJSON("lensaResults", []);
+      const results = studentName ? allResults.filter(item => item.nama === studentName) : allResults;
+      const reached = results.length
+        ? Math.max(1, ...results.map(item => Number(item.level?.match(/C([1-5])/)?.[1] || 1)))
+        : 0;
+      const best = results.length
+        ? Math.max(0, ...results.map(item => Number(item.skor || 0)))
+        : 0;
+
+      if ($("homeProgressText")) {
+        $("homeProgressText").textContent = reached
+          ? `Progres Petualangan: ${levels[reached]} (${reached}/5)`
+          : "Progres Petualangan: Siap Mulai (C1–C5)";
+      }
+      if ($("homeBestScore")) {
+        $("homeBestScore").textContent = `Skor Terbaik: ${best}`;
+      }
+      if ($("homeProgressFill")) {
+        $("homeProgressFill").style.width = `${reached ? Math.max(20, reached * 20) : 12}%`;
+      }
+    }
+
+    let currentMatTab = "0";
+    function showMaterialTab(tab) {
+      currentMatTab = String(tab);
+      document.querySelectorAll("[data-mat-tab]").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.matTab === currentMatTab);
+      });
+      const cards = document.querySelectorAll("[data-mat-card]");
+      cards.forEach(card => {
+        const show = currentMatTab === "all" || card.dataset.matCard === currentMatTab;
+        card.hidden = !show;
+      });
+      const pager = $("materialPager");
+      if (pager) {
+        pager.style.display = currentMatTab === "all" ? "none" : "grid";
+      }
+      const prevBtn = $("matPrev");
+      const nextBtn = $("matNext");
+      if (prevBtn && nextBtn && currentMatTab !== "all") {
+        const idx = Number(currentMatTab);
+        prevBtn.disabled = idx <= 0;
+        nextBtn.textContent = idx >= 5 ? "Semua (6) 📑" : "Lanjut ➡️";
+      }
+    }
+
+    function statusFor(n) {
+      return n >= 80 ? "🌟 Sangat Baik" : n >= 70 ? "👍 Baik" : n >= 60 ? "📖 Cukup" : "💪 Perlu Belajar Lagi";
+    }
+
+    function startGame() {
+      if (!studentName) {
+        showScreen("studentLogin");
+        return;
+      }
+      currentLevel = 1;
+      score = 0;
+      correctAnswers = 0;
+      wrongAnswers = 0;
+      questionNumber = 0;
+      highestLevel = 1;
+      usedQuestions = [];
+      $("gameScore").textContent = "0";
+      showScreen("game");
+      loadQuestion();
+    }
+
+    function updateLevelUI() {
+      $("levelTitle").textContent = levels[currentLevel];
+      $("levelDesc").textContent = descriptions[currentLevel];
+      for (let i = 1; i <= 5; i++) {
+        $("level" + i).classList.toggle("done", i < currentLevel);
+        $("level" + i).classList.toggle("active", i === currentLevel);
+      }
+    }
+
+    function getQuestion() {
+      let available = questionBank.filter(q => q.level === "C" + currentLevel && !usedQuestions.includes(q.id));
+      if (!available.length) {
+        usedQuestions = usedQuestions.filter(id => !questionBank.some(q => q.id === id && q.level === "C" + currentLevel));
+        available = questionBank.filter(q => q.level === "C" + currentLevel && !usedQuestions.includes(q.id));
+      }
+      return available[Math.floor(Math.random() * available.length)];
+    }
+
+    function loadQuestion() {
+      updateLevelUI();
+      activeQuestion = getQuestion();
+      if (!activeQuestion) {
+        finishGame();
+        return;
+      }
+      answered = false;
+      usedQuestions.push(activeQuestion.id);
+      questionNumber++;
+      $("questionCount").textContent = String(questionNumber);
+      const area = $("questionArea");
+      area.replaceChildren();
+
+      const card = document.createElement("div");
+      card.className = "question-card";
+
+      const number = document.createElement("div");
+      number.className = "question-number";
+      number.textContent = "SOAL " + questionNumber + " (TINGKAT " + activeQuestion.level + ")";
+
+      const prompt = document.createElement("div");
+      prompt.className = "question";
+      prompt.textContent = activeQuestion.question;
+
+      card.append(number, prompt);
+
+      activeQuestion.options.forEach((option, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "option";
+
+        const badge = document.createElement("span");
+        badge.className = "option-badge";
+        badge.textContent = String.fromCharCode(65 + index);
+
+        const text = document.createElement("span");
+        text.textContent = option;
+
+        button.append(badge, text);
+        button.addEventListener("click", () => answerQuestion(index));
+        card.append(button);
+      });
+
+      area.append(card);
+    }
+
+    function answerQuestion(selected) {
+      if (answered || !activeQuestion) return;
+      answered = true;
+      const q = activeQuestion;
+      const buttons = $("questionArea").querySelectorAll(".option");
+      buttons.forEach(button => button.disabled = true);
+      buttons[q.answer].classList.add("correct");
+
+      const correct = selected === q.answer;
+      playBeep(correct ? 'correct' : 'wrong');
+
+      if (!correct) {
+        buttons[selected].classList.add("wrong");
+        wrongAnswers++;
+      } else {
+        score += 10;
+        correctAnswers++;
+        if (currentLevel < 5) {
+          currentLevel++;
+        }
+        highestLevel = Math.max(highestLevel, currentLevel);
+      }
+      $("gameScore").textContent = String(score);
+
+      const feedback = document.createElement("div");
+      feedback.className = "feedback " + (correct ? "correct" : "wrong");
+
+      const heading = document.createElement("div");
+      heading.className = "feedback-title";
+      heading.textContent = correct ? "🎉 Hebat, Jawaban Benar!" : "💪 Hampir Tepat, Ayo Semangat!";
+
+      const explanation = document.createElement("div");
+      explanation.className = "explanation";
+      explanation.textContent = "Pembahasan: " + q.explanation + " " +
+        (correct
+          ? (q.level === "C5" ? "Selamat! Kamu telah menyelesaikan tingkat evaluasi C5 tertinggi." : "Hebat! Kamu naik ke tingkat " + levels[currentLevel] + ".")
+          : "Jangan patah semangat! Kamu akan mencoba soal pendalaman pada tingkat " + levels[currentLevel] + ".");
+
+      const next = document.createElement("button");
+      next.type = "button";
+      next.className = "btn " + (correct ? "btn-success" : "btn-primary");
+      next.textContent = correct
+        ? (q.level === "C5" ? "🏆 LIHAT HASIL AKHIR" : "➡️ LANJUT KE TINGKAT BERIKUTNYA")
+        : "🔄 COBA SOAL BERIKUTNYA";
+
+      next.addEventListener("click", () => correct && q.level === "C5" ? finishGame() : loadQuestion());
+
+      feedback.append(heading, explanation, next);
+      $("questionArea").append(feedback);
+    }
+
+    function finishGame() {
+      // Trigger confetti celebration!
+      try {
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 90,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }
+      } catch (e) {}
+
+      const result = {
+        nama: studentName,
+        skor: score,
+        benar: correctAnswers,
+        salah: wrongAnswers,
+        level: levels[highestLevel],
+        tanggal: new Date().toLocaleString("id-ID")
+      };
+
+      try {
+        const all = readJSON("lensaResults", []);
+        all.push(result);
+        localStorage.setItem("lensaResults", JSON.stringify(all));
+        localStorage.setItem("lensaLastResult", JSON.stringify(result));
+      } catch {
+        showToast("Hasil tidak dapat disimpan di browser ini.");
+      }
+      showResult(result);
+    }
+
+    function showResult(result = readJSON("lensaLastResult", null)) {
+      if (result && studentName && result.nama !== studentName) {
+        result = [...readJSON("lensaResults", [])].reverse().find(item => item.nama === studentName) || null;
+      }
+      const skorVal = result?.skor ?? 0;
+      if ($("resultStars")) {
+        $("resultStars").textContent = skorVal >= 80 ? "⭐⭐⭐" : skorVal >= 60 ? "⭐⭐" : "⭐";
+      }
+      $("resultName").textContent = result ? "Nama Siswa: " + result.nama : "Belum ada hasil permainan tersimpan.";
+      $("resultScore").textContent = String(skorVal);
+      $("resultCorrect").textContent = String(result?.benar ?? 0);
+      $("resultWrong").textContent = String(result?.salah ?? 0);
+      $("highestLevel").textContent = result?.level ?? "C1 – Mengingat";
+      $("resultStatus").textContent = result ? statusFor(result.skor) : "";
+      showScreen("result");
+    }
+
+    function showProfile() {
+      $("profileName").textContent = studentName || "Siswa LENSA";
+      const results = readJSON("lensaResults", []).filter(item => item.nama === studentName);
+      const reached = Math.max(0, ...results.map(item => Number(item.level?.match(/C([1-5])/)?.[1] || 0)));
+
+      $("profileProgress").replaceChildren();
+      for (let i = 1; i <= 5; i++) {
+        const item = document.createElement("div");
+        item.className = "flex items-center justify-between p-3.5 rounded-2xl " + (i <= reached ? "bg-emerald-50 text-emerald-900 border-2 border-emerald-200" : "bg-sky-50/70 text-slate-500 border border-sky-200");
+        item.innerHTML = "<span class='font-extrabold text-sm'>" + levels[i] + "</span>" +
+          (i <= reached ? "<span class='text-emerald-600 font-black text-sm'>⭐ Dikuasai</span>" : "<span class='text-slate-400 font-bold text-xs'>🔒 Belum tercapai</span>");
+        $("profileProgress").append(item);
+      }
+      showScreen("profile");
+    }
+
+    function loadTeacherData() {
+      const data = readJSON("lensaResults", []);
+      $("totalStudents").textContent = String(data.length);
+      $("averageScore").textContent = String(data.length ? Math.round(data.reduce((sum, item) => sum + Number(item.skor || 0), 0) / data.length) : 0);
+      $("c5Students").textContent = String(data.filter(item => item.level?.includes("C5")).length);
+      $("excellentStudents").textContent = String(data.filter(item => item.skor >= 80).length);
+
+      const table = $("studentTable");
+      table.replaceChildren();
+
+      if (!data.length) {
+        const row = table.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 7;
+        cell.className = "py-4 text-slate-400 italic";
+        cell.textContent = "Belum ada data hasil belajar siswa tersimpan.";
+        return;
+      }
+
+      data.forEach((item, index) => {
+        const row = table.insertRow();
+        const status = item.skor >= 80 ? "Sangat Baik" : item.skor >= 70 ? "Baik" : item.skor >= 60 ? "Cukup" : "Perlu Bimbingan";
+        [index + 1, item.nama, item.skor, item.benar, item.salah, item.level, status].forEach(value => {
+          const cell = row.insertCell();
+          cell.textContent = String(value ?? "");
+          if (value === "Sangat Baik") cell.className = "text-emerald-600 font-bold";
+          else if (value === "Perlu Bimbingan") cell.className = "text-amber-600 font-bold";
+        });
+      });
+    }
+
+    // Export teacher records to CSV
+    $("export-csv").addEventListener("click", () => {
+      const data = readJSON("lensaResults", []);
+      if (!data.length) {
+        showToast("Belum ada data siswa untuk diunduh.");
+        return;
+      }
+      let csv = "No,Nama,Skor,Jawaban Benar,Jawaban Salah,Level Tertinggi,Waktu Pengerjaan\n";
+      data.forEach((d, i) => {
+        csv += `${i + 1},"${(d.nama || '').replace(/"/g, '""')}",${d.skor},${d.benar},${d.salah},"${d.level}","${d.tanggal}"\n`;
+      });
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `lensa-rekap-nilai-${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // Event listeners
+    document.querySelectorAll("[data-go]").forEach(button =>
+      button.addEventListener("click", () => showScreen(button.dataset.go))
+    );
+    document.querySelectorAll("[data-start-game]").forEach(button =>
+      button.addEventListener("click", startGame)
+    );
+    document.querySelectorAll("[data-mat-tab]").forEach(button =>
+      button.addEventListener("click", () => showMaterialTab(button.dataset.matTab))
+    );
+    if ($("matPrev")) {
+      $("matPrev").addEventListener("click", () => {
+        if (currentMatTab !== "all" && Number(currentMatTab) > 0) {
+          showMaterialTab(Number(currentMatTab) - 1);
+        }
+      });
+    }
+    if ($("matNext")) {
+      $("matNext").addEventListener("click", () => {
+        if (currentMatTab !== "all") {
+          const idx = Number(currentMatTab);
+          if (idx < 5) showMaterialTab(idx + 1);
+          else showMaterialTab("all");
+        }
+      });
+    }
+
+    $("student-form").addEventListener("submit", event => {
+      event.preventDefault();
+      const name = $("studentName").value.trim();
+      if (!name) {
+        showToast("Silakan masukkan nama terlebih dahulu.");
+        return;
+      }
+      studentName = name;
+      try {
+        localStorage.setItem("lensaStudentName", name);
+      } catch {
+        showToast("Nama tidak dapat disimpan di browser ini.");
+      }
+      $("welcomeName").textContent = name;
+      showScreen("studentHome");
+    });
+
+    $("game-menu").addEventListener("click", startGame);
+    $("results-menu").addEventListener("click", () => showResult());
+    $("profile-menu").addEventListener("click", showProfile);
+    $("teacher-entry").addEventListener("click", () => {
+      loadTeacherData();
+      showScreen("teacher");
+    });
+    $("refresh-button").addEventListener("click", () => {
+      loadTeacherData();
+      showToast("Data hasil belajar telah diperbarui.");
+    });
+    $("delete-button").addEventListener("click", () => $("delete-confirmation").hidden = false);
+    $("cancel-delete").addEventListener("click", () => $("delete-confirmation").hidden = true);
+    $("confirm-delete").addEventListener("click", () => {
+      try {
+        localStorage.removeItem("lensaResults");
+        localStorage.removeItem("lensaLastResult");
+        $("delete-confirmation").hidden = true;
+        loadTeacherData();
+        showToast("Seluruh data siswa berhasil dihapus.");
+      } catch {
+        showToast("Data tidak dapat dihapus di browser ini.");
+      }
+    });
+
+    try {
+      studentName = localStorage.getItem("lensaStudentName") || "";
+    } catch {
+      studentName = "";
+    }
+    if (studentName) {
+      $("studentName").value = studentName;
+      $("welcomeName").textContent = studentName;
+    }
+    updateHomeProgress();
+    showMaterialTab("0");
+    if (window.location.hash === "#teacher") {
+      showScreen("teacher");
+    }
+  </script>
+</body>
+</html>
